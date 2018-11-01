@@ -1,23 +1,32 @@
-require("dotenv").config();
 const fetch = require("node-fetch");
 
-let baseurl = "http://chapi.tauri.hu/apiIndex.php";
-let apiSecret = process.env.TAURI_SECRET;
-let apiKey = process.env.TAURI_API_KEY;
-let url = baseurl + "?apikey=" + apiKey;
-
-let obj = {
-    secret: apiSecret,
-    url: "character-sheet",
-    params: {
-        r: "[HU] Tauri WoW Server",
-        n: "Metcol"
+class TauriApi {
+    constructor(apikey, apisecret) {
+        this.apisecret = apisecret;
+        this.apikey = apikey;
+        this.baseurl = "http://chapi.tauri.hu/apiIndex.php";
+        this.realms = {
+            tauri: "[HU] Tauri WoW Server",
+            wod: "[HU] Warriors of Darkness",
+            evermoon: "[EN] Evermoon"
+        };
     }
-};
 
-fetch(url, {
-    method: "POST",
-    body: encodeURIComponent(JSON.stringify(obj))
-})
-    .then(res => res.json())
-    .then(res => console.log(res));
+    getCharacter(name, realm = "tauri") {
+        return fetch(this.baseurl + "?apikey=" + this.apikey, {
+            method: "POST",
+            body: encodeURIComponent(
+                JSON.stringify({
+                    secret: this.secret,
+                    url: "character-sheet",
+                    params: {
+                        r: this.realms[realm],
+                        n: name
+                    }
+                })
+            )
+        }).then(res => res.json());
+    }
+}
+
+module.exports = TauriApi;
