@@ -49,6 +49,22 @@ class TauriApi {
             )
         });
     }
+
+    getAchievements(name, realm = "tauri") {
+        return this.request({
+            method: "POST",
+            body: encodeURIComponent(
+                JSON.stringify({
+                    secret: this.apisecret,
+                    url: "character-achievements",
+                    params: {
+                        r: this.realms[realm],
+                        n: name
+                    }
+                })
+            )
+        });
+    }
 }
 
 module.exports = TauriApi;
