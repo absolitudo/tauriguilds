@@ -12,12 +12,18 @@ class TauriApi {
         };
     }
 
+    request(options) {
+        return fetch(this.baseurl + "?apikey=" + this.apikey, options).then(
+            res => res.json()
+        );
+    }
+
     getCharacter(name, realm = "tauri") {
-        return fetch(this.baseurl + "?apikey=" + this.apikey, {
+        return this.request({
             method: "POST",
             body: encodeURIComponent(
                 JSON.stringify({
-                    secret: this.secret,
+                    secret: this.apisecret,
                     url: "character-sheet",
                     params: {
                         r: this.realms[realm],
@@ -25,7 +31,23 @@ class TauriApi {
                     }
                 })
             )
-        }).then(res => res.json());
+        });
+    }
+
+    getGuild(name, realm = "tauri") {
+        return this.request({
+            method: "POST",
+            body: encodeURIComponent(
+                JSON.stringify({
+                    secret: this.apisecret,
+                    url: "guild-info",
+                    params: {
+                        r: this.realms[realm],
+                        gn: name
+                    }
+                })
+            )
+        });
     }
 }
 
