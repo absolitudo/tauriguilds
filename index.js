@@ -1,11 +1,12 @@
+require("dotenv").config();
 const firebase = require("firebase-admin");
 const functions = require("firebase-functions");
 const TauriApi = require("./tauriApi");
 
 firebase.initializeApp(JSON.parse(process.env.FIREBASE_CONFIG));
 const tauri = new TauriApi(
-    functions.config().tauri.key,
-    functions.config().tauri.secret
+    process.env.TAURI_API_KEY,
+    process.env.TAURI_API_SECRET
 );
 
 exports.getGuilds = functions.https.onRequest((request, response) => {

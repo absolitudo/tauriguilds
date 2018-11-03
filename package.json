@@ -2,13 +2,15 @@
   "name": "tauriguilds",
   "main": "index.js",
   "dependencies": {
+    "dotenv": "^6.1.0",
+    "express": "^4.16.4",
     "node-fetch": "^2.2.0"
   },
   "engines": {
     "node": "8.x"
   },
   "repository": {
-    "url": "https://glitch.com/edit/#!/hello-express"
+    "url": "https://github.com/absolitudo/tauriguilds"
   },
   "private": true
 }
