@@ -24,26 +24,25 @@ exports.getGuild = functions.https.onRequest((request, response) => {
         .database()
         .ref("tauriguilds/" + request.body.guild)
         .once("value")
-        .then(async snapshot => {
+        .then(snapshot => {
             if (
                 snapshot.val() == null ||
                 whenWas(snapshot.val().lastUpdated) > 2
             ) {
-                let data;
                 try {
-                    data = await getGuildData(request.body.guild);
+                    getGuildData(request.body.guild).then(data => {
+                        Promise.all([
+                            firebase
+                                .database()
+                                .ref("tauriguilds/" + request.body.guild)
+                                .set(data.extended),
 
-                    await firebase
-                        .database()
-                        .ref("tauriguilds/" + request.body.guild)
-                        .set(data.extended);
-
-                    await firebase
-                        .database()
-                        .ref("compactguilds/" + request.body.guild)
-                        .set(data.compact);
-
-                    response.send(data.extended);
+                            firebase
+                                .database()
+                                .ref("compactguilds/" + request.body.guild)
+                                .set(data.compact)
+                        ]).then(() => response.send(data.extended));
+                    });
                 } catch (err) {
                     response.send(err);
                 }
@@ -54,48 +53,49 @@ exports.getGuild = functions.https.onRequest((request, response) => {
 });
 
 function getGuildData(guildname) {
-    return new Promise(async (resolve, reject) => {
-        let guildData = await tauri.getGuild(guildname);
+    return new Promise((resolve, reject) => {
+        tauri.getGuild(guildname).then(guildData => {
+            if (!guildData.success) {
+                reject(guildData.errorstring);
+            } else {
+                const trimmedRoster = trimRoster(guildData.response.guildList);
+                getRosterAchievements(trimmedRoster).then(
+                    rosterAchievements => {
+                        const progression = getProgression(rosterAchievements);
 
-        if (!guildData.success) {
-            reject(guildData.errorstring);
-        } else {
-            const trimmedRoster = trimRoster(guildData.response.guildList);
-            const rosterAchievements = await getRosterAchievements(
-                trimmedRoster
-            );
-            const progression = getProgression(rosterAchievements);
+                        guildData.response.progression = progression;
+                        guildData.response.lastUpdated =
+                            new Date().getTime() / 1000;
 
-            guildData.response.progression = progression;
-            guildData.response.lastUpdated = new Date().getTime() / 1000;
-
-            resolve({
-                compact: getCompactGuildData(guildData.response),
-                extended: guildData.response
-            });
-        }
+                        resolve({
+                            compact: getCompactGuildData(guildData.response),
+                            extended: guildData.response
+                        });
+                    }
+                );
+            }
+        });
     });
 }
 
 function trimRoster(roster) {
-    let trimmedRoster = {
-        gm: "",
-        members: []
-    };
+    let trimmedRoster = [];
 
     for (let member in roster) {
-        if (roster[member].rank === 0) {
-            trimmedRoster.gm = roster[member];
-        } else if (roster[member].rank < 6) {
-            trimmedRoster.members.push(roster[member]);
+        if (roster[member].rank < 6) {
+            trimmedRoster.push(roster[member]);
         }
     }
 
     let memberCounter = 0;
 
-    trimmedRoster.members = trimmedRoster.members.filter(() => {
+    trimmedRoster = trimmedRoster.filter(member => {
         let rando = Math.round(Math.random()) === 1;
-        if (memberCounter < 10 || (rando && memberCounter < 20)) {
+        if (
+            memberCounter < 10 ||
+            (rando && memberCounter < 20) ||
+            member.rank === 0
+        ) {
             memberCounter++;
             return true;
         }
@@ -105,33 +105,30 @@ function trimRoster(roster) {
     return trimmedRoster;
 }
 
-async function getRosterAchievements(roster) {
+function getRosterAchievements(roster) {
     let rosterAchievements = [];
-    try {
-        let gm = await tauri.getAchievements(roster.gm.name);
-        rosterAchievements.push(gm);
-    } catch (err) {
-        rosterAchievements.push({
-            success: false,
-            errorstring: err
+
+    return chainArrayPromise(roster, 0, rosterAchievements).then(
+        rosterAchievements => {
+            return rosterAchievements
+                .filter(data => data.success)
+                .map(data => data.response);
+        }
+    );
+}
+
+function chainArrayPromise(arr, currIndex, newArray) {
+    if (currIndex === arr.length - 1) {
+        return tauri.getAchievements(arr[currIndex].name).then(data => {
+            newArray.push(data);
+            return newArray;
         });
     }
 
-    for (let member of roster.members) {
-        try {
-            member = await tauri.getAchievements(member.name);
-            rosterAchievements.push(member);
-        } catch (err) {
-            rosterAchievements.push({
-                success: false,
-                errorstring: err
-            });
-        }
-    }
-
-    return rosterAchievements
-        .filter(data => data.success)
-        .map(data => data.response);
+    return tauri
+        .getAchievements(arr[currIndex].name)
+        .then(data => newArray.push(data))
+        .then(() => chainArrayPromise(arr, currIndex + 1, newArray));
 }
 
 function getProgression(roster) {
@@ -176,7 +173,6 @@ function getProgression(roster) {
     };
 
     for (let member of roster) {
-        console.log(member.name);
         for (let achievement in member["Achievements"]) {
             const achievementName = member["Achievements"][achievement].name;
             if (progression["Throne of Thunder"][achievementName]) {
