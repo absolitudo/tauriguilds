@@ -1,4 +1,5 @@
 const fetch = require("node-fetch");
+const url = require("url");
 
 class TauriApi {
     constructor(apikey, apisecret) {
@@ -13,9 +14,10 @@ class TauriApi {
     }
 
     request(options) {
-        return fetch(this.baseurl + "?apikey=" + this.apikey, options).then(
-            res => res.json()
-        );
+        return fetch(
+            url.parse(this.baseurl + "?apikey=" + this.apikey),
+            options
+        ).then(res => res.json());
     }
 
     getCharacter(name, realm = "tauri") {

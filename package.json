@@ -1,0 +1,14 @@
+{
+  "name": "tauriguilds",
+  "main": "index.js",
+  "dependencies": {
+    "node-fetch": "^2.2.0"
+  },
+  "engines": {
+    "node": "8.x"
+  },
+  "repository": {
+    "url": "https://glitch.com/edit/#!/hello-express"
+  },
+  "private": true
+}
