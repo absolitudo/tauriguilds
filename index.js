@@ -1,14 +1,40 @@
 require("dotenv").config();
-const firebase = require("firebase-admin");
-const functions = require("firebase-functions");
+const app = require("express")();
+const bodyParser = require("body-parser");
 const TauriApi = require("./tauriApi");
-
-firebase.initializeApp(JSON.parse(process.env.FIREBASE_CONFIG));
+const MongoClient = require("mongodb").MongoClient;
+const dbUser = process.env.MONGODB_USER;
+const dbPass = process.env.MONGODB_PASSWORD;
+const port = process.env.PORT || 3000;
+const mongoUrl = `mongodb://${dbUser}:${dbPass}@ds251223.mlab.com:51223/tauriguilds`;
 const tauri = new TauriApi(
     process.env.TAURI_API_KEY,
     process.env.TAURI_API_SECRET
 );
 
+MongoClient.connect(
+    mongoUrl,
+    { useNewUrlParser: true },
+    (err, client) => {
+        if (err) {
+            console.log(err);
+        }
+
+        const compactguilds = client.db("compactguilds");
+        const extendedguilds = client.db("extendedguilds");
+
+        app.use(bodyParser.json());
+
+        app.get("/getGuilds", (req, res) => {});
+
+        app.get("/getGuild", (req, res) => {});
+
+        app.listen(port, port =>
+            console.log(`Server listening on port ${port}`)
+        );
+    }
+);
+/*
 exports.getGuilds = functions.https.onRequest((request, response) => {
     firebase
         .database()
@@ -51,7 +77,7 @@ exports.getGuild = functions.https.onRequest((request, response) => {
             }
         });
 });
-
+*/
 function getGuildData(guildname) {
     return new Promise((resolve, reject) => {
         tauri.getGuild(guildname).then(guildData => {
