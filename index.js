@@ -20,18 +20,24 @@ MongoClient.connect(
             console.log(err);
         }
 
-        const compactguilds = client.db("compactguilds");
-        const extendedguilds = client.db("extendedguilds");
+        const db = client.db("tauriguilds");
+        const compactguilds = db.collection("compactguilds");
+        const extendedguilds = db.collection("extendedguilds");
 
         app.use(bodyParser.json());
 
-        app.get("/getGuilds", (req, res) => {});
+        app.get("/getGuilds", (req, res) => {
+            compactguilds
+                .find()
+                .toArray()
+                .then(data => {
+                    res.send(data);
+                });
+        });
 
         app.get("/getGuild", (req, res) => {});
 
-        app.listen(port, port =>
-            console.log(`Server listening on port ${port}`)
-        );
+        app.listen(port, () => console.log(`Server listening on port ${port}`));
     }
 );
 /*
