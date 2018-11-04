@@ -26,67 +26,63 @@ MongoClient.connect(
 
         app.use(bodyParser.json());
 
-        app.get("/getGuilds", (req, res) => {
-            compactguilds
-                .find()
-                .toArray()
-                .then(data => {
-                    res.send(data);
-                });
+        app.get("/getGuilds", async (req, res) => {
+            const guilds = await compactguilds.find().toArray();
+            res.send(guilds);
         });
 
-        app.get("/getGuild", (req, res) => {});
+        app.post("/getGuild", async (req, res) => {
+            const guildName = req.body.guildName;
+            const guild = await extendedguilds.findOne({
+                guildName: new RegExp(guildName, "i")
+            });
+
+            console.log("...............", guildName, guild);
+
+            if (!guild || whenWas(guild.lastUpdated) > 2) {
+                try {
+                    const guildData = await getGuildData(guildName);
+
+                    console.log("...................", guildData);
+
+                    if (!guild) {
+                        compactguilds.insertOne(guildData.compact);
+                        extendedguilds.insertOne(guildData.extended);
+                    } else {
+                        compactguilds.updateOne(
+                            {
+                                guildName
+                            },
+                            { $set: guildData.compact }
+                        );
+                        extendedguilds.updateOne(
+                            {
+                                guildName
+                            },
+                            { $set: guildData.extended }
+                        );
+                    }
+
+                    res.send(guildData.extended);
+                } catch (err) {
+                    res.send(err);
+                }
+            } else {
+                res.send(guild);
+            }
+        });
+
+        app.post("/test", async (req, res) => {
+            res.send(req.body);
+        });
 
         app.listen(port, () => console.log(`Server listening on port ${port}`));
     }
 );
-/*
-exports.getGuilds = functions.https.onRequest((request, response) => {
-    firebase
-        .database()
-        .ref("compactguilds")
-        .once("value")
-        .then(snapshot => {
-            response.send(snapshot.val());
-        });
-});
 
-exports.getGuild = functions.https.onRequest((request, response) => {
-    firebase
-        .database()
-        .ref("tauriguilds/" + request.body.guild)
-        .once("value")
-        .then(snapshot => {
-            if (
-                snapshot.val() == null ||
-                whenWas(snapshot.val().lastUpdated) > 2
-            ) {
-                try {
-                    getGuildData(request.body.guild).then(data => {
-                        Promise.all([
-                            firebase
-                                .database()
-                                .ref("tauriguilds/" + request.body.guild)
-                                .set(data.extended),
-
-                            firebase
-                                .database()
-                                .ref("compactguilds/" + request.body.guild)
-                                .set(data.compact)
-                        ]).then(() => response.send(data.extended));
-                    });
-                } catch (err) {
-                    response.send(err);
-                }
-            } else {
-                response.send(snapshot.val());
-            }
-        });
-});
-*/
-function getGuildData(guildname) {
+function getGuildData(guildName) {
     return new Promise((resolve, reject) => {
-        tauri.getGuild(guildname).then(guildData => {
+        tauri.getGuild(guildName).then(guildData => {
             if (!guildData.success) {
                 reject(guildData.errorstring);
             } else {
