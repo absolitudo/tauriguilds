@@ -37,13 +37,9 @@ MongoClient.connect(
                 guildName: new RegExp(guildName, "i")
             });
 
-            console.log("...............", guildName, guild);
-
             if (!guild || whenWas(guild.lastUpdated) > 2) {
                 try {
                     const guildData = await getGuildData(guildName);
-
-                    console.log("...................", guildData);
 
                     if (!guild) {
                         compactguilds.insertOne(guildData.compact);
@@ -72,37 +68,31 @@ MongoClient.connect(
             }
         });
 
-        app.post("/test", async (req, res) => {
-            res.send(req.body);
-        });
-
         app.listen(port, () => console.log(`Server listening on port ${port}`));
     }
 );
 
-function getGuildData(guildName) {
-    return new Promise((resolve, reject) => {
-        tauri.getGuild(guildName).then(guildData => {
-            if (!guildData.success) {
-                reject(guildData.errorstring);
-            } else {
-                const trimmedRoster = trimRoster(guildData.response.guildList);
-                getRosterAchievements(trimmedRoster).then(
-                    rosterAchievements => {
-                        const progression = getProgression(rosterAchievements);
+async function getGuildData(guildName) {
+    return new Promise(async (resolve, reject) => {
+        let guildData = await tauri.getGuild(guildName);
 
-                        guildData.response.progression = progression;
-                        guildData.response.lastUpdated =
-                            new Date().getTime() / 1000;
+        if (!guildData.success) {
+            reject(guildData.errorstring);
+        } else {
+            const trimmedRoster = trimRoster(guildData.response.guildList);
+            const rosterAchievements = await getRosterAchievements(
+                trimmedRoster
+            );
+            const progression = getProgression(rosterAchievements);
 
-                        resolve({
-                            compact: getCompactGuildData(guildData.response),
-                            extended: guildData.response
-                        });
-                    }
-                );
-            }
-        });
+            guildData.response.progression = progression;
+            guildData.response.lastUpdated = new Date().getTime() / 1000;
+
+            resolve({
+                compact: getCompactGuildData(guildData.response),
+                extended: guildData.response
+            });
+        }
     });
 }
 
@@ -133,30 +123,16 @@ function trimRoster(roster) {
     return trimmedRoster;
 }
 
-function getRosterAchievements(roster) {
+async function getRosterAchievements(roster) {
     let rosterAchievements = [];
 
-    return chainArrayPromise(roster, 0, rosterAchievements).then(
-        rosterAchievements => {
-            return rosterAchievements
-                .filter(data => data.success)
-                .map(data => data.response);
-        }
-    );
-}
-
-function chainArrayPromise(arr, currIndex, newArray) {
-    if (currIndex === arr.length - 1) {
-        return tauri.getAchievements(arr[currIndex].name).then(data => {
-            newArray.push(data);
-            return newArray;
-        });
+    for (let member of roster) {
+        rosterAchievements.push(await tauri.getAchievements(member.name));
     }
 
-    return tauri
-        .getAchievements(arr[currIndex].name)
-        .then(data => newArray.push(data))
-        .then(() => chainArrayPromise(arr, currIndex + 1, newArray));
+    return rosterAchievements
+        .filter(data => data.success)
+        .map(data => data.response);
 }
 
 function getProgression(roster) {
