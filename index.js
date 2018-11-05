@@ -33,13 +33,14 @@ MongoClient.connect(
 
         app.post("/getGuild", async (req, res) => {
             const guildName = req.body.guildName;
+            const realm = req.body.realm || "tauri";
             const guild = await extendedguilds.findOne({
                 guildName: new RegExp(guildName, "i")
             });
 
             if (!guild || whenWas(guild.lastUpdated) > 2) {
                 try {
-                    const guildData = await getGuildData(guildName);
+                    const guildData = await getGuildData(guildName, realm);
 
                     if (!guild) {
                         compactguilds.insertOne(guildData.compact);
@@ -72,9 +73,9 @@ MongoClient.connect(
     }
 );
 
-async function getGuildData(guildName) {
+async function getGuildData(guildName, realm) {
     return new Promise(async (resolve, reject) => {
-        let guildData = await tauri.getGuild(guildName);
+        let guildData = await tauri.getGuild(guildName, realm);
 
         if (!guildData.success) {
             reject(guildData.errorstring);
