@@ -99,20 +99,23 @@ async function getGuildData(guildName, realm) {
 
 function trimRoster(roster) {
     let trimmedRoster = [];
+    let memberMuliplyr = 0;
 
     for (let member in roster) {
-        if (roster[member].rank < 6) {
+        memberMuliplyr++;
+        if (roster[member].rank < 5) {
             trimmedRoster.push(roster[member]);
         }
     }
 
+    memberMuliplyr = memberMuliplyr > 80 ? memberMuliplyr / 80 : 1;
     let memberCounter = 0;
 
     trimmedRoster = trimmedRoster.filter(member => {
         let rando = Math.round(Math.random()) === 1;
         if (
             memberCounter < 10 ||
-            (rando && memberCounter < 20) ||
+            (rando && memberCounter < 20 * memberMuliplyr) ||
             member.rank === 0
         ) {
             memberCounter++;
