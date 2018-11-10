@@ -1,5 +1,6 @@
 require("dotenv").config();
 const app = require("express")();
+const cors = require("cors");
 const bodyParser = require("body-parser");
 const TauriApi = require("./tauriApi");
 const MongoClient = require("mongodb").MongoClient;
@@ -24,6 +25,12 @@ MongoClient.connect(
         const compactguilds = db.collection("compactguilds");
         const extendedguilds = db.collection("extendedguilds");
 
+        app.use(
+            cors({
+                origin: "https://tauriguilds.github.io",
+                optionsSuccessStatus: 200
+            })
+        );
         app.use(bodyParser.json());
 
         app.get("/getGuilds", async (req, res) => {
@@ -62,7 +69,7 @@ MongoClient.connect(
 
                     res.send(guildData.extended);
                 } catch (err) {
-                    res.send(err);
+                    res.send({ err });
                 }
             } else {
                 res.send(guild);
@@ -253,3 +260,5 @@ function getCompactGuildData(guildData) {
 function whenWas(time) {
     return Math.round((new Date().getTime() / 1000 - Number(time)) / 3600);
 }
+
+module.exports = getGuildData;
