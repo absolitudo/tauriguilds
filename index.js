@@ -247,13 +247,21 @@ function getProgression(roster) {
 }
 
 function getCompactGuildData(guildData) {
-    const { progression, guildName, lastUpdated, gFaction, realm } = guildData;
+    const {
+        progression,
+        guildName,
+        lastUpdated,
+        gFaction,
+        realm,
+        guildMembersCount
+    } = guildData;
     return {
         progression,
         guildName,
         gFaction,
         realm,
-        lastUpdated
+        lastUpdated,
+        guildMembersCount
     };
 }
 
