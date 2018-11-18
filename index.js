@@ -12,6 +12,7 @@ const tauri = new TauriApi(
     process.env.TAURI_API_KEY,
     process.env.TAURI_API_SECRET
 );
+const { validateGetGuildRequest } = require("./middlewares");
 
 MongoClient.connect(
     mongoUrl,
@@ -38,7 +39,7 @@ MongoClient.connect(
             res.send(guilds);
         });
 
-        app.post("/getGuild", async (req, res) => {
+        app.post("/getGuild", validateGetGuildRequest, async (req, res) => {
             const guildName = req.body.guildName;
             const realm = req.body.realm || "tauri";
             const guild = await extendedguilds.findOne({
@@ -55,13 +56,13 @@ MongoClient.connect(
                     } else {
                         compactguilds.updateOne(
                             {
-                                guildName
+                                guildName: new RegExp(guildName, "i")
                             },
                             { $set: guildData.compact }
                         );
                         extendedguilds.updateOne(
                             {
-                                guildName
+                                guildName: new RegExp(guildName, "i")
                             },
                             { $set: guildData.extended }
                         );
@@ -69,7 +70,7 @@ MongoClient.connect(
 
                     res.send(guildData.extended);
                 } catch (err) {
-                    res.send({ err });
+                    res.send(JSON.stringify({ err }));
                 }
             } else {
                 res.send(guild);
