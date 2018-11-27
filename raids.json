@@ -1,0 +1,39 @@
+{
+    "Throne of Thunder": {
+        "Heroic: Jin'rokh the Breaker": true,
+        "Heroic: Horridon": true,
+        "Heroic: Council of Elders": true,
+        "Heroic: Tortos": true,
+        "Heroic: Megaera": true,
+        "Heroic: Ji-Kun": true,
+        "Heroic: Durumu the Forgotten": true,
+        "Heroic: Primordius": true,
+        "Heroic: Dark Animus": true,
+        "Heroic: Iron Qon": true,
+        "Heroic: Twin Consorts": true,
+        "Heroic: Lei Shen": true,
+        "Heroic: Ra-den": true
+    },
+    "Terrace of the Endless Spring": {
+        "Heroic: Protectors of the Endless": true,
+        "Heroic: Tsulong": true,
+        "Heroic: Lei Shi": true,
+        "Heroic: Sha of Fear": true
+    },
+    "Heart of Fear": {
+        "Heroic: Imperial Vizier Zor'lok": true,
+        "Heroic: Blade Lord Ta'yak": true,
+        "Heroic: Garalon": true,
+        "Heroic: Wind Lord Mel'jarak": true,
+        "Heroic: Amber-Shaper Un'sok": true,
+        "Heroic: Grand Empress Shek'zeer": true
+    },
+    "Mogu'shan Vaults": {
+        "Heroic: Stone Guard": true,
+        "Heroic: Feng the Accursed": true,
+        "Heroic: Gara'jal the Spiritbinder": true,
+        "Heroic: Four Kings": true,
+        "Heroic: Elegon": true,
+        "Heroic: Will of the Emperor": true
+    }
+}
