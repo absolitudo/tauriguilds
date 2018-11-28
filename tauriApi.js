@@ -6,11 +6,6 @@ class TauriApi {
         this.apisecret = apisecret;
         this.apikey = apikey;
         this.baseurl = "http://chapi.tauri.hu/apiIndex.php";
-        this.realms = {
-            tauri: "[HU] Tauri WoW Server",
-            wod: "[HU] Warriors of Darkness",
-            evermoon: "[EN] Evermoon"
-        };
     }
 
     request(options) {
@@ -20,7 +15,7 @@ class TauriApi {
         ).then(res => res.json());
     }
 
-    getCharacter(name, realm = "tauri") {
+    getCharacter(name, realm) {
         return this.request({
             method: "POST",
             body: encodeURIComponent(
@@ -28,7 +23,7 @@ class TauriApi {
                     secret: this.apisecret,
                     url: "character-sheet",
                     params: {
-                        r: this.realms[realm],
+                        r: realm,
                         n: name
                     }
                 })
@@ -36,7 +31,7 @@ class TauriApi {
         });
     }
 
-    getGuild(name, realm = "tauri") {
+    getGuild(name, realm) {
         return this.request({
             method: "POST",
             body: encodeURIComponent(
@@ -44,7 +39,7 @@ class TauriApi {
                     secret: this.apisecret,
                     url: "guild-info",
                     params: {
-                        r: this.realms[realm],
+                        r: realm,
                         gn: name
                     }
                 })
@@ -60,7 +55,7 @@ class TauriApi {
                     secret: this.apisecret,
                     url: "character-achievements",
                     params: {
-                        r: this.realms[realm],
+                        r: realm,
                         n: name
                     }
                 })

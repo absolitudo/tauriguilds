@@ -16,7 +16,8 @@ async function getGuildData(guildName, realm) {
         } else {
             const trimmedRoster = trimRoster(guildData.response.guildList);
             const rosterAchievements = await getRosterAchievements(
-                trimmedRoster
+                trimmedRoster,
+                guildData.response.realm
             );
             const progression = getProgression(rosterAchievements);
 
@@ -35,26 +36,36 @@ function trimRoster(roster) {
     let trimmedRoster = [];
 
     for (let member in roster) {
-        if (roster[member].rank < 5 && roster[member].level === 90) {
+        if (
+            roster[member].rank < 5 &&
+            roster[member].level === 90 &&
+            !/\balt\b/gi.test(roster[member]["rank_name"])
+        ) {
             trimmedRoster.push(roster[member]);
         }
     }
 
-    return trimmedRoster
-        .sort(() => 0.5 - Math.random())
-        .slice(0, Math.floor(trimmedRoster.length / 3));
+    let n =
+        trimmedRoster.length / 3 < 10
+            ? trimmedRoster.length > 10
+                ? 10
+                : trimmedRoster.length
+            : Math.floor(trimmedRoster.length / 3);
+
+    return trimmedRoster.sort(() => 0.5 - Math.random()).slice(0, n);
 }
 
 async function getRosterAchievements(roster) {
     let rosterAchievements = [];
 
     for (let member of roster) {
-        rosterAchievements.push(await tauri.getAchievements(member.name));
+        let data = await tauri.getAchievements(member.name, member.realm);
+        if (data.success) {
+            rosterAchievements.push(data.response);
+        }
     }
 
-    return rosterAchievements
-        .filter(data => data.success)
-        .map(data => data.response);
+    return rosterAchievements;
 }
 
 function getProgression(roster) {
