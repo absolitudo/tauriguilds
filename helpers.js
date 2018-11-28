@@ -33,32 +33,16 @@ async function getGuildData(guildName, realm) {
 
 function trimRoster(roster) {
     let trimmedRoster = [];
-    let memberMuliplyr = 0;
 
     for (let member in roster) {
-        memberMuliplyr++;
-        if (roster[member].rank < 5) {
+        if (roster[member].rank < 5 && roster[member].level === 90) {
             trimmedRoster.push(roster[member]);
         }
     }
 
-    memberMuliplyr = memberMuliplyr > 80 ? memberMuliplyr / 80 : 1;
-    let memberCounter = 0;
-
-    trimmedRoster = trimmedRoster.filter(member => {
-        let rando = Math.round(Math.random()) === 1;
-        if (
-            memberCounter < 10 ||
-            (rando && memberCounter < 20 * memberMuliplyr) ||
-            member.rank === 0
-        ) {
-            memberCounter++;
-            return true;
-        }
-        return false;
-    });
-
-    return trimmedRoster;
+    return trimmedRoster
+        .sort(() => 0.5 - Math.random())
+        .slice(0, Math.floor(trimmedRoster.length / 3));
 }
 
 async function getRosterAchievements(roster) {
@@ -119,7 +103,7 @@ function getProgression(roster) {
 
     for (let instance in raids) {
         for (let achievement in raids[instance]) {
-            if (raids[instance][achievement] > 3) {
+            if (raids[instance][achievement] > 2) {
                 raids[instance][achievement] = true;
             } else {
                 raids[instance][achievement] = false;
@@ -127,9 +111,7 @@ function getProgression(roster) {
         }
     }
 
-    raids = abbreviateProgression(raids);
-
-    return raids;
+    return abbreviateProgression(raids);
 }
 
 function getCompactGuildData(guildData) {
