@@ -1,7 +1,7 @@
 require("dotenv").config();
-const raidsConst = require("./raids.json");
 const abbreviations = require("./abbreviations.json");
 const TauriApi = require("./tauriApi");
+const raidsConst = require("./raids.json");
 const tauri = new TauriApi(
     process.env.TAURI_API_KEY,
     process.env.TAURI_API_SECRET
@@ -69,45 +69,20 @@ async function getRosterAchievements(roster) {
 }
 
 function getProgression(roster) {
-    let raids = { ...raidsConst };
+    let raids = JSON.parse(JSON.stringify(raidsConst));
 
     for (let member of roster) {
         for (let achievement in member["Achievements"]) {
             const achievementName = member["Achievements"][achievement].name;
-            if (raids["Throne of Thunder"][achievementName]) {
-                if (
-                    typeof raids["Throne of Thunder"][achievementName] ===
-                    "boolean"
-                ) {
-                    raids["Throne of Thunder"][achievementName] = 0;
+
+            for (let instance in raids) {
+                if (raids[instance][achievementName]) {
+                    if (typeof raids[instance][achievementName] === "boolean") {
+                        raids[instance][achievementName] = 0;
+                    }
+
+                    raids[instance][achievementName] += 1;
                 }
-                raids["Throne of Thunder"][achievementName] += 1;
-            } else if (
-                raids["Terrace of the Endless Spring"][achievementName]
-            ) {
-                if (
-                    typeof raids["Terrace of the Endless Spring"][
-                        achievementName
-                    ] === "boolean"
-                ) {
-                    raids["Terrace of the Endless Spring"][achievementName] = 0;
-                }
-                raids["Terrace of the Endless Spring"][achievementName] += 1;
-            } else if (raids["Heart of Fear"][achievementName]) {
-                if (
-                    typeof raids["Heart of Fear"][achievementName] === "boolean"
-                ) {
-                    raids["Heart of Fear"][achievementName] = 0;
-                }
-                raids["Heart of Fear"][achievementName] += 1;
-            } else if (raids["Mogu'shan Vaults"][achievementName]) {
-                if (
-                    typeof raids["Mogu'shan Vaults"][achievementName] ===
-                    "boolean"
-                ) {
-                    raids["Mogu'shan Vaults"][achievementName] = 0;
-                }
-                raids["Mogu'shan Vaults"][achievementName] += 1;
             }
         }
     }
@@ -149,7 +124,9 @@ function whenWas(time) {
 }
 
 function abbreviateProgression(progression) {
-    for (let raid in raidsConst) {
+    let abbriviatedProg = { ...progression };
+
+    for (let raid in abbriviatedProg) {
         let totalBosses = 0;
         let heroicDefeated = 0;
 
@@ -160,12 +137,12 @@ function abbreviateProgression(progression) {
             totalBosses++;
         }
 
-        progression[raid].abbreviation = `${
+        abbriviatedProg[raid].abbreviation = `${
             abbreviations[raid]
         } ${heroicDefeated}/${totalBosses} HC`;
     }
 
-    return progression;
+    return abbriviatedProg;
 }
 
 module.exports = {
