@@ -78,10 +78,21 @@ function getProgression(roster) {
             for (let instance in raids) {
                 if (raids[instance][achievementName]) {
                     if (typeof raids[instance][achievementName] === "boolean") {
-                        raids[instance][achievementName] = 0;
+                        raids[instance][achievementName] = {
+                            date: member["Achievements"][achievement].date,
+                            times: 0
+                        };
                     }
 
-                    raids[instance][achievementName] += 1;
+                    if (
+                        member["Achievements"][achievement].date <
+                        raids[instance][achievementName].date
+                    ) {
+                        raids[instance][achievementName].date =
+                            member["Achievements"][achievement].date;
+                    }
+
+                    raids[instance][achievementName].times += 1;
                 }
             }
         }
@@ -89,8 +100,9 @@ function getProgression(roster) {
 
     for (let instance in raids) {
         for (let achievement in raids[instance]) {
-            if (raids[instance][achievement] > 2) {
-                raids[instance][achievement] = true;
+            if (raids[instance][achievement].times > 2) {
+                raids[instance][achievement] =
+                    raids[instance][achievement].date;
             } else {
                 raids[instance][achievement] = false;
             }
@@ -131,10 +143,12 @@ function abbreviateProgression(progression) {
         let heroicDefeated = 0;
 
         for (let boss in progression[raid]) {
-            if (progression[raid][boss]) {
-                heroicDefeated++;
+            if (boss !== "abbreviation") {
+                if (progression[raid][boss]) {
+                    heroicDefeated++;
+                }
+                totalBosses++;
             }
-            totalBosses++;
         }
 
         abbriviatedProg[raid].abbreviation = `${
@@ -145,12 +159,47 @@ function abbreviateProgression(progression) {
     return abbriviatedProg;
 }
 
+function mergeOldGuildData({ compact, extended }, oldGuildData) {
+    let progression = {};
+    let newGuildProgression = compact.progression;
+    let oldGuildProgression = oldGuildData.progression;
+
+    for (let raid in oldGuildProgression) {
+        progression[raid] = {};
+
+        for (let boss in oldGuildProgression[raid]) {
+            let oldTime = oldGuildProgression[raid][boss];
+            let newTime = newGuildProgression[raid][boss];
+
+            if (oldTime || newTime) {
+                progression[raid][boss] = !oldTime
+                    ? newTime
+                    : oldTime > newTime
+                    ? newTime
+                    : oldTime;
+            } else {
+                progression[raid][boss] = false;
+            }
+        }
+    }
+    progression = abbreviateProgression(progression);
+
+    compact.progression = progression;
+    extended.progression = progression;
+
+    return {
+        compact: { ...compact, progression },
+        extended: { ...extended, progression }
+    };
+}
+
 module.exports = {
     getGuildData,
     trimRoster,
     getRosterAchievements,
     getProgression,
     getCompactGuildData,
+    mergeOldGuildData,
     whenWas,
     abbreviateProgression
 };

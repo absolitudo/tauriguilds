@@ -3,7 +3,7 @@ const app = require("express")();
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const MongoClient = require("mongodb").MongoClient;
-const { getGuildData, whenWas } = require("./helpers.js");
+const { getGuildData, mergeOldGuildData, whenWas } = require("./helpers.js");
 const dbUser = process.env.MONGODB_USER;
 const dbPass = process.env.MONGODB_PASSWORD;
 const port = process.env.PORT || 3000;
@@ -45,12 +45,12 @@ MongoClient.connect(
 
             if (!guild || whenWas(guild.lastUpdated) > 2) {
                 try {
-                    const guildData = await getGuildData(guildName, realm);
-
+                    let guildData = await getGuildData(guildName, realm);
                     if (!guild) {
                         compactguilds.insertOne(guildData.compact);
                         extendedguilds.insertOne(guildData.extended);
                     } else {
+                        guildData = mergeOldGuildData(guildData, guild);
                         compactguilds.updateOne(
                             {
                                 guildName: new RegExp(guildName, "i")

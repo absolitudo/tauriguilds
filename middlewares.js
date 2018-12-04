@@ -10,7 +10,7 @@ function validateGetGuildRequest(req, res, next) {
     try {
         req.body.realm = req.body.realm.trim().replace(/\s+/, " ");
     } catch (err) {
-        req.body.realm = "tauri";
+        req.body.realm = "[HU] Tauri WoW Server";
     }
     next();
 }
