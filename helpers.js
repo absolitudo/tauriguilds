@@ -172,11 +172,14 @@ function mergeOldGuildData({ compact, extended }, oldGuildData) {
             let newTime = newGuildProgression[raid][boss];
 
             if (oldTime || newTime) {
-                progression[raid][boss] = !oldTime
-                    ? newTime
-                    : oldTime > newTime
-                    ? newTime
-                    : oldTime;
+                if (!oldTime) {
+                    progression[raid][boss] = newTime;
+                } else if (!newTime) {
+                    progression[raid][boss] = oldTime;
+                } else {
+                    progression[raid][boss] =
+                        oldTime > newTime ? newTime : oldTime;
+                }
             } else {
                 progression[raid][boss] = false;
             }
