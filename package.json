@@ -10,7 +10,8 @@
     "node-fetch": "^2.2.0"
   },
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "jest ./test"
   },
   "engines": {
     "node": "8.x"
@@ -18,5 +19,8 @@
   "repository": {
     "url": "https://github.com/absolitudo/tauriguilds"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "jest": "^23.6.0"
+  }
 }
