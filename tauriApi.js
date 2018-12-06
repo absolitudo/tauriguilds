@@ -15,7 +15,7 @@ class TauriApi {
         ).then(res => res.json());
     }
 
-    getCharacter(name, realm) {
+    getCharacter(realm, name) {
         return this.request({
             method: "POST",
             body: encodeURIComponent(
@@ -31,7 +31,7 @@ class TauriApi {
         });
     }
 
-    getGuild(name, realm) {
+    getGuild(realm, name) {
         return this.request({
             method: "POST",
             body: encodeURIComponent(
@@ -47,7 +47,7 @@ class TauriApi {
         });
     }
 
-    getAchievements(name, realm = "tauri") {
+    getAchievements(realm, name) {
         return this.request({
             method: "POST",
             body: encodeURIComponent(
@@ -57,6 +57,125 @@ class TauriApi {
                     params: {
                         r: realm,
                         n: name
+                    }
+                })
+            )
+        });
+    }
+
+    getRaidMaps(realm) {
+        // get encounters by exapnsion
+        return this.request({
+            method: "POST",
+            body: encodeURIComponent(
+                JSON.stringify({
+                    secret: this.apisecret,
+                    url: "raid-maps",
+                    params: {
+                        r: realm
+                    }
+                })
+            )
+        });
+    }
+
+    getRaidLog(realm, id) {
+        // returns info of 1 raid encounter by id
+        return this.request({
+            method: "POST",
+            body: encodeURIComponent(
+                JSON.stringify({
+                    secret: this.apisecret,
+                    url: "raid-log",
+                    params: {
+                        r: realm,
+                        id: id
+                    }
+                })
+            )
+        });
+    }
+
+    getRaidLast(realm) {
+        // returns the last boss kills on server, big response
+        return this.request({
+            method: "POST",
+            body: encodeURIComponent(
+                JSON.stringify({
+                    secret: this.apisecret,
+                    url: "raid-last",
+                    params: {
+                        r: realm
+                    }
+                })
+            )
+        });
+    }
+
+    getRaidPlayer(realm, characterName) {
+        // returns latest boss kills of the player
+        return this.request({
+            method: "POST",
+            body: encodeURIComponent(
+                JSON.stringify({
+                    secret: this.apisecret,
+                    url: "raid-player",
+                    params: {
+                        r: realm,
+                        cn: characterName
+                    }
+                })
+            )
+        });
+    }
+
+    getRaidGuild(realm, guildName) {
+        // returns latest boss kills of the guild
+        return this.request({
+            method: "POST",
+            body: encodeURIComponent(
+                JSON.stringify({
+                    secret: this.apisecret,
+                    url: "raid-guild",
+                    params: {
+                        r: realm,
+                        gn: guildName
+                    }
+                })
+            )
+        });
+    }
+
+    getRaidRank(realm, encounter, difficulty) {
+        // return boss kills of boss, sorted by fastest kill ascending
+        return this.request({
+            method: "POST",
+            body: encodeURIComponent(
+                JSON.stringify({
+                    secret: this.apisecret,
+                    url: "raid-rank-encounter",
+                    params: {
+                        r: realm,
+                        encounter: encounter,
+                        difficulty: difficulty
+                    }
+                })
+            )
+        });
+    }
+
+    getRaidGuildRank(realm, encounter, difficulty) {
+        // similar to getRaidRank
+        return this.request({
+            method: "POST",
+            body: encodeURIComponent(
+                JSON.stringify({
+                    secret: this.apisecret,
+                    url: "raid-guildrank-encounter",
+                    params: {
+                        r: realm,
+                        encounter: encounter,
+                        difficulty: difficulty
                     }
                 })
             )
