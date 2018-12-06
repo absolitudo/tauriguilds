@@ -7,136 +7,110 @@ const tauri = new TauriApi(
     process.env.TAURI_API_SECRET
 );
 
-async function getGuildData(guildName, realm) {
+async function getGuildData(realm, guildName) {
     return new Promise(async (resolve, reject) => {
-        let guildData = await tauri.getGuild(guildName, realm);
+        try {
+            let guildData = await tauri.getGuild(realm, guildName);
 
-        if (!guildData.success) {
-            reject(guildData.errorstring);
-        } else {
-            const trimmedRoster = trimRoster(guildData.response.guildList);
-            const rosterAchievements = await getRosterAchievements(
-                trimmedRoster,
-                guildData.response.realm
-            );
-            const progression = getProgression(rosterAchievements);
+            if (!guildData.success) {
+                throw guildData.errorstring;
+            } else {
+                guildData.response.guildList = getGuildListProgression(
+                    guildData.response.guildList
+                );
 
-            guildData.response.progression = progression;
-            guildData.response.lastUpdated = new Date().getTime() / 1000;
+                guildData.response.progression = getGuildProgression(
+                    guildData.response.guildList
+                );
 
-            resolve({
-                compact: getCompactGuildData(guildData.response),
-                extended: guildData.response
-            });
+                guildData.response.lastUpdated = new Date().getTime() / 1000;
+
+                resolve(guildData.response);
+            }
+        } catch (err) {
+            reject(err);
         }
     });
 }
 
-function trimRoster(roster) {
-    let trimmedRoster = [];
+async function getGuildListProgression(guildList) {
+    return guildList.map(async player => {
+        let data = await tauri.getAchievements(realm, playerName);
 
-    for (let member in roster) {
-        if (
-            roster[member].rank < 5 &&
-            roster[member].level === 90 &&
-            !/\balt\b/gi.test(roster[member]["rank_name"])
-        ) {
-            trimmedRoster.push(roster[member]);
-        }
-    }
-
-    let n =
-        trimmedRoster.length / 3 < 10
-            ? trimmedRoster.length > 10
-                ? 10
-                : trimmedRoster.length
-            : Math.floor(trimmedRoster.length / 3);
-
-    return trimmedRoster.sort(() => 0.5 - Math.random()).slice(0, n);
-}
-
-async function getRosterAchievements(roster) {
-    let rosterAchievements = [];
-
-    for (let member of roster) {
-        let data = await tauri.getAchievements(member.name, member.realm);
         if (data.success) {
-            rosterAchievements.push(data.response);
+            return {
+                ...player,
+                progression: getProgFromAchi(data.response)
+            };
+        }
+
+        return player;
+    });
+}
+
+function getProgFromAchi(achievements) {
+    let progression = JSON.parse(JSON.stringify(raidsConst));
+
+    for (let achievement in achievements) {
+        const achievementName = achievements[achievement].name;
+
+        for (let instance in progression) {
+            if (progression[instance][achievementName]) {
+                progression[instance][achievementName] =
+                    achievements[achievement].date;
+            }
         }
     }
 
-    return rosterAchievements;
+    return abbreviateProgression(progression);
 }
 
-function getProgression(roster) {
-    let raids = JSON.parse(JSON.stringify(raidsConst));
+function getGuildProgression(guildList) {
+    let progression = JSON.parse(JSON.stringify(raidsConst));
 
-    for (let member of roster) {
-        for (let achievement in member["Achievements"]) {
-            const achievementName = member["Achievements"][achievement].name;
+    for (let player of guildList) {
+        if (player.progression) {
+            for (let instance in progression) {
+                for (let boss in progression[instance]) {
+                    if (player.progression[instance][boss]) {
+                        if (typeof progression[instance][boss] === "boolean") {
+                            progression[instance][boss] = {
+                                times: 0,
+                                date: player.progression[instance][boss]
+                            };
+                        }
 
-            for (let instance in raids) {
-                if (raids[instance][achievementName]) {
-                    if (typeof raids[instance][achievementName] === "boolean") {
-                        raids[instance][achievementName] = {
-                            date: member["Achievements"][achievement].date,
-                            times: 0
-                        };
+                        if (
+                            progression[instance][boss] >
+                            player.progression[instance][boss].date
+                        ) {
+                            progression[instance][boss].date =
+                                player.progression[instance][boss];
+                        }
+
+                        progression[instance][boss].times += 1;
                     }
-
-                    if (
-                        member["Achievements"][achievement].date <
-                        raids[instance][achievementName].date
-                    ) {
-                        raids[instance][achievementName].date =
-                            member["Achievements"][achievement].date;
-                    }
-
-                    raids[instance][achievementName].times += 1;
                 }
             }
         }
     }
 
-    for (let instance in raids) {
-        for (let achievement in raids[instance]) {
-            if (raids[instance][achievement].times > 2) {
-                raids[instance][achievement] =
-                    raids[instance][achievement].date;
+    for (let instance in progression) {
+        for (let achievement in progression[instance]) {
+            if (progression[instance][achievement].times > 7) {
+                progression[instance][achievement] =
+                    progression[instance][achievement].date;
             } else {
-                raids[instance][achievement] = false;
+                progression[instance][achievement] = false;
             }
         }
     }
 
-    return abbreviateProgression(raids);
-}
-
-function getCompactGuildData(guildData) {
-    const {
-        progression,
-        guildName,
-        lastUpdated,
-        gFaction,
-        realm,
-        guildMembersCount
-    } = guildData;
-    return {
-        progression,
-        guildName,
-        gFaction,
-        realm,
-        lastUpdated,
-        guildMembersCount
-    };
-}
-
-function whenWas(time) {
-    return Math.round((new Date().getTime() / 1000 - Number(time)) / 3600);
+    return abbreviateProgression(progression);
 }
 
 function abbreviateProgression(progression) {
-    let abbriviatedProg = { ...progression };
+    let abbriviatedProg = JSON.parse(JSON.stringify(progression));
 
     for (let raid in abbriviatedProg) {
         let totalBosses = 0;
@@ -159,9 +133,9 @@ function abbreviateProgression(progression) {
     return abbriviatedProg;
 }
 
-function mergeOldGuildData({ compact, extended }, oldGuildData) {
+function mergeOldGuildData(oldGuildData, newGuildData) {
     let progression = {};
-    let newGuildProgression = compact.progression;
+    let newGuildProgression = newGuildData.progression;
     let oldGuildProgression = oldGuildData.progression;
 
     for (let raid in oldGuildProgression) {
@@ -187,22 +161,30 @@ function mergeOldGuildData({ compact, extended }, oldGuildData) {
     }
     progression = abbreviateProgression(progression);
 
-    compact.progression = progression;
-    extended.progression = progression;
+    return { ...newGuildData, progression };
+}
 
-    return {
-        compact: { ...compact, progression },
-        extended: { ...extended, progression }
-    };
+function wait(time) {
+    return new Promise((resolve, reject) => {
+        try {
+            setTimeout(() => resolve("done"), time);
+        } catch (err) {
+            reject(err);
+        }
+    });
+}
+
+function whenWas(time) {
+    return Math.round((new Date().getTime() / 1000 - Number(time)) / 3600);
 }
 
 module.exports = {
     getGuildData,
-    trimRoster,
-    getRosterAchievements,
-    getProgression,
-    getCompactGuildData,
+    getGuildListProgression,
+    getProgFromAchi,
+    getGuildProgression,
+    abbreviateProgression,
     mergeOldGuildData,
-    whenWas,
-    abbreviateProgression
+    wait,
+    whenWas
 };
