@@ -14,19 +14,19 @@ async function getGuildData(realm, guildName) {
 
             if (!guildData.success) {
                 throw guildData.errorstring;
-            } else {
-                guildData.response.guildList = getGuildListProgression(
-                    guildData.response.guildList
-                );
-
-                guildData.response.progression = getGuildProgression(
-                    guildData.response.guildList
-                );
-
-                guildData.response.lastUpdated = new Date().getTime() / 1000;
-
-                resolve(guildData.response);
             }
+
+            guildData.response.guildList = await getGuildListProgression(
+                guildData.response.guildList
+            );
+
+            guildData.response.progression = getGuildProgression(
+                guildData.response.guildList
+            );
+
+            guildData.response.lastUpdated = new Date().getTime() / 1000;
+
+            resolve(guildData.response);
         } catch (err) {
             reject(err);
         }
@@ -34,23 +34,30 @@ async function getGuildData(realm, guildName) {
 }
 
 async function getGuildListProgression(guildList) {
-    let newGuildList = {};
+    return new Promise(async (resolve, reject) => {
+        try {
+            let newGuildList = {};
 
-    for (let player in guildList) {
-        let data = await tauri.getAchievements(
-            guildList[player].realm,
-            guildList[player].playerName
-        );
+            for (let player in guildList) {
+                let data = await tauri.getAchievements(
+                    guildList[player].realm,
+                    guildList[player].name
+                );
+                if (data.success) {
+                    newGuildList[player] = {
+                        ...guildList[player],
+                        progression: getProgFromAchi(
+                            data.response["Achievements"]
+                        )
+                    };
+                }
+            }
 
-        if (data.success) {
-            newGuildList[player] = {
-                ...guildList[player],
-                progression: getProgFromAchi(data.response)
-            };
+            resolve(newGuildList);
+        } catch (err) {
+            reject(err);
         }
-    }
-
-    return newGuildList;
+    });
 }
 
 function getProgFromAchi(achievements) {
@@ -63,6 +70,14 @@ function getProgFromAchi(achievements) {
             if (progression[instance][achievementName]) {
                 progression[instance][achievementName] =
                     achievements[achievement].date;
+            }
+        }
+    }
+
+    for (let instance in progression) {
+        for (let boss in progression[instance]) {
+            if (typeof progression[instance][boss] === "boolean") {
+                progression[instance][boss] = false;
             }
         }
     }
@@ -87,8 +102,8 @@ function getGuildProgression(guildList) {
                         }
 
                         if (
-                            progression[instance][boss] >
-                            player.progression[instance][boss].date
+                            progression[instance][boss].date >
+                            player.progression[instance][boss]
                         ) {
                             progression[instance][boss].date =
                                 player.progression[instance][boss];
@@ -148,8 +163,14 @@ function mergeOldGuildData(oldGuildData, newGuildData) {
         progression[raid] = {};
 
         for (let boss in oldGuildProgression[raid]) {
-            let oldTime = oldGuildProgression[raid][boss];
-            let newTime = newGuildProgression[raid][boss];
+            let oldTime =
+                typeof oldGuildProgression[raid][boss] === "boolean"
+                    ? false
+                    : oldGuildProgression[raid][boss];
+            let newTime =
+                typeof newGuildProgression[raid][boss] === "boolean"
+                    ? false
+                    : newGuildProgression[raid][boss];
 
             if (oldTime || newTime) {
                 if (!oldTime) {

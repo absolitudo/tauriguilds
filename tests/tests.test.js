@@ -179,7 +179,9 @@ describe("abbreviate progression", () => {
 });
 
 describe("get progression from achievements", () => {
-    let progression = getProgFromAchi(playerWithAchievements);
+    let progression = getProgFromAchi(
+        playerWithAchievements.data.response["Achievements"]
+    );
 
     test("has all instances", () => {
         let isTrue = true;
