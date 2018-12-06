@@ -34,18 +34,23 @@ async function getGuildData(realm, guildName) {
 }
 
 async function getGuildListProgression(guildList) {
-    return guildList.map(async player => {
-        let data = await tauri.getAchievements(realm, playerName);
+    let newGuildList = {};
+
+    for (let player in guildList) {
+        let data = await tauri.getAchievements(
+            guildList[player].realm,
+            guildList[player].playerName
+        );
 
         if (data.success) {
-            return {
-                ...player,
+            newGuildList[player] = {
+                ...guildList[player],
                 progression: getProgFromAchi(data.response)
             };
         }
+    }
 
-        return player;
-    });
+    return newGuildList;
 }
 
 function getProgFromAchi(achievements) {
@@ -68,7 +73,8 @@ function getProgFromAchi(achievements) {
 function getGuildProgression(guildList) {
     let progression = JSON.parse(JSON.stringify(raidsConst));
 
-    for (let player of guildList) {
+    for (let id in guildList) {
+        let player = guildList[id];
         if (player.progression) {
             for (let instance in progression) {
                 for (let boss in progression[instance]) {
@@ -165,6 +171,9 @@ function mergeOldGuildData(oldGuildData, newGuildData) {
 }
 
 function wait(time) {
+    if (typeof time !== "number") {
+        throw "invalid input";
+    }
     return new Promise((resolve, reject) => {
         try {
             setTimeout(() => resolve("done"), time);
@@ -175,7 +184,10 @@ function wait(time) {
 }
 
 function whenWas(time) {
-    return Math.round((new Date().getTime() / 1000 - Number(time)) / 3600);
+    if (typeof time === "number") {
+        return Math.round((new Date().getTime() / 1000 - Number(time)) / 3600);
+    }
+    return false;
 }
 
 module.exports = {
