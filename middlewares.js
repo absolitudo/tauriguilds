@@ -1,4 +1,4 @@
-function validateGetGuildRequest(req, res, next) {
+function valiDateGuildRequest(req, res, next) {
     const guildName = req.body.guildName;
 
     try {
@@ -16,5 +16,5 @@ function validateGetGuildRequest(req, res, next) {
 }
 
 module.exports = {
-    validateGetGuildRequest
+    valiDateGuildRequest
 };
