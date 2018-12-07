@@ -21,9 +21,9 @@ function validatePlayerRequest(req, res, next) {
     }
 
     try {
-        req.body.playerName = req.body.playerName.trim().replace(/\s+/, " ");
+        req.body.playerId = Number(req.body.playerId.toString().trim());
     } catch (err) {
-        res.send(JSON.stringify({ err: "Invalid player name." }));
+        res.send(JSON.stringify({ err: "Invalid player id." }));
     }
 
     try {
