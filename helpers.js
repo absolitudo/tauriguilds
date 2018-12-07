@@ -76,7 +76,7 @@ async function getGuildListProgression(guildMembersCount, guildList) {
 
             resolve(newGuildList);
         } catch (err) {
-            console.log(err);
+            reject(err);
         }
     });
 }
