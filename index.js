@@ -139,6 +139,12 @@ MongoClient.connect(
 
                 if (!player) throw "Player not found";
 
+                if (
+                    whenWas(player.lastUpdated) &&
+                    whenWas(player.lastUpdated) < 1
+                )
+                    throw "Can't update yet, please wait an hour.";
+
                 let data = await getPlayerProgression(realm, player.name);
                 let newPlayer = { ...player, ...data };
 
