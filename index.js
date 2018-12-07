@@ -10,6 +10,7 @@ const {
     whenWas,
     wait
 } = require("./helpers.js");
+const updater = require("./updater");
 const dbUser = process.env.MONGODB_USER;
 const dbPass = process.env.MONGODB_PASSWORD;
 const port = process.env.PORT || 3001;
@@ -33,7 +34,7 @@ MongoClient.connect(
 
         app.use(
             cors({
-                origin: "https://tauriguilds.github.io",
+                origin: "http://localhost:3000", //https://tauriguilds.github.io
                 optionsSuccessStatus: 200
             })
         );
@@ -62,9 +63,9 @@ MongoClient.connect(
         });
 
         app.post("/getguild", validateGuildRequest, async (req, res) => {
+            const guildName = req.body.guildName;
+            const realm = req.body.realm;
             try {
-                const guildName = req.body.guildName;
-                const realm = req.body.realm;
                 const guild = await guildsCollection.findOne({
                     guildName: new RegExp(guildName, "i"),
                     realm
@@ -83,10 +84,10 @@ MongoClient.connect(
         });
 
         app.post("/addguild", validateGuildRequest, async (req, res) => {
+            const guildName = req.body.guildName;
+            const realm = req.body.realm;
+            let updateId = 0;
             try {
-                const guildName = req.body.guildName;
-                const realm = req.body.realm;
-
                 let oldGuildData = await guildsCollection.findOne({
                     guildName: new RegExp(guildName, "i"),
                     realm
@@ -95,6 +96,10 @@ MongoClient.connect(
                 if (oldGuildData && whenWas(oldGuildData.lastUpdated) < 3) {
                     res.send(oldGuildData);
                 } else {
+                    if (updater.isUpdating(guildName))
+                        throw guildName + " is currently updating";
+
+                    updateId = updater.update(guildName);
                     let newGuildData = await getGuildData(realm, guildName);
 
                     if (oldGuildData) {
@@ -114,8 +119,11 @@ MongoClient.connect(
                         await guildsCollection.insertOne(newGuildData);
                         res.send(newGuildData);
                     }
+                    updater.updateFinished(guildName, updateId);
                 }
             } catch (err) {
+                updater.updateFinished(guildName, updateId);
+
                 res.send({
                     err
                 });
@@ -123,11 +131,11 @@ MongoClient.connect(
         });
 
         app.post("/updateplayer", validatePlayerRequest, async (req, res) => {
+            const guildName = req.body.guildName;
+            const playerId = req.body.playerId;
+            const realm = req.body.realm;
+            const updateId = 0;
             try {
-                const guildName = req.body.guildName;
-                const playerId = req.body.playerId;
-                const realm = req.body.realm;
-
                 const guild = await guildsCollection.findOne({
                     guildName: new RegExp(guildName, "i"),
                     realm
@@ -145,6 +153,11 @@ MongoClient.connect(
                 )
                     throw "Can't update yet, please wait an hour.";
 
+                if (updater.isUpdating(playerId))
+                    throw player.name + " is currently updating";
+
+                updateId = updater.update(playerId);
+
                 let data = await getPlayerProgression(realm, player.name);
                 let newPlayer = { ...player, ...data };
 
@@ -159,8 +172,10 @@ MongoClient.connect(
                         }
                     }
                 );
+                updater.updateFinished(playerId, updateId);
                 res.send(newPlayer);
             } catch (err) {
+                updater.updateFinished(playerId, updateId);
                 res.send({
                     err
                 });
