@@ -9,10 +9,24 @@ class TauriApi {
     }
 
     request(options) {
-        return fetch(
-            url.parse(this.baseurl + "?apikey=" + this.apikey),
-            options
-        ).then(res => res.json());
+        return new Promise(async (resolve, reject) => {
+            let timeOut = setTimeout(() => {
+                reject({
+                    sucess: false,
+                    errorstring: "request timed out"
+                });
+            }, 2000);
+
+            resolve(
+                await fetch(
+                    url.parse(this.baseurl + "?apikey=" + this.apikey),
+                    options
+                ).then(res => {
+                    clearTimeout(timeOut);
+                    return res.json();
+                })
+            );
+        });
     }
 
     getCharacter(realm, name) {
