@@ -17,6 +17,7 @@ async function getGuildData(realm, guildName) {
             }
 
             guildData.response.guildList = await getGuildListProgression(
+                guildData.response.guildMembersCount,
                 guildData.response.guildList
             );
 
@@ -33,27 +34,66 @@ async function getGuildData(realm, guildName) {
     });
 }
 
-async function getGuildListProgression(guildList) {
+async function getGuildListProgression(guildMembersCount, guildList) {
     return new Promise(async (resolve, reject) => {
         try {
+            let maxRank = guildMembersCount > 250 ? 6 : 10;
             let newGuildList = {};
 
             for (let player in guildList) {
-                let data = await tauri.getAchievements(
-                    guildList[player].realm,
-                    guildList[player].name
-                );
-                if (data.success) {
+                await wait(500);
+
+                let success = false;
+                let data = {};
+                if (
+                    guildList[player].level === 90 &&
+                    guildList[player].rank < maxRank
+                ) {
+                    try {
+                        data = await getPlayerProgression(
+                            guildList[player].realm,
+                            guildList[player].name
+                        );
+                        success = true;
+                    } catch (err) {
+                        console.log(err);
+                        await wait(20000);
+                    }
+                }
+
+                if (success) {
                     newGuildList[player] = {
                         ...guildList[player],
-                        progression: getProgFromAchi(
-                            data.response["Achievements"]
-                        )
+                        ...data
+                    };
+                } else {
+                    newGuildList[player] = {
+                        ...guildList[player],
+                        progression: getProgFromAchi({})
                     };
                 }
             }
 
             resolve(newGuildList);
+        } catch (err) {
+            console.log(err);
+        }
+    });
+}
+
+async function getPlayerProgression(realm, name) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let res = await tauri.getAchievements(realm, name);
+
+            if (res.success) {
+                resolve({
+                    progression: getProgFromAchi(res.response["Achievements"]),
+                    lastUpdated: new Date().getTime() / 1000
+                });
+            } else {
+                throw res.error.errorstring;
+            }
         } catch (err) {
             reject(err);
         }
@@ -214,6 +254,7 @@ function whenWas(time) {
 module.exports = {
     getGuildData,
     getGuildListProgression,
+    getPlayerProgression,
     getProgFromAchi,
     getGuildProgression,
     abbreviateProgression,
