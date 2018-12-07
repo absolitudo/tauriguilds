@@ -205,7 +205,8 @@ MongoClient.connect(
 
                     guildsCollection.updateOne(
                         {
-                            guildName: new RegExp(guilds[i].guildname, "i")
+                            guildName: new RegExp(guilds[i].guildname, "i"),
+                            realm: guilds[i].realm
                         },
                         { $set: newGuildData }
                     );
@@ -215,7 +216,8 @@ MongoClient.connect(
                     console.log(err);
                     if (err === "guild not found") {
                         guildsCollection.deleteOne({
-                            guildName: new RegExp(guilds[i].guildname, "i")
+                            guildName: new RegExp(guilds[i].guildname, "i"),
+                            realm: guilds[i].realm
                         });
                         i++;
                     }
