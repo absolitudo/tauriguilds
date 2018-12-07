@@ -1,6 +1,9 @@
 function validateGuildRequest(req, res, next) {
     try {
-        req.body.guildName = req.body.guildName.trim().replace(/\s+/, " ");
+        req.body.guildName = req.body.guildName
+            .trim()
+            .replace(/\s+/, " ")
+            .toLowerCase();
     } catch (err) {
         res.send(JSON.stringify({ err: "Invalid guild name." }));
     }
@@ -15,7 +18,10 @@ function validateGuildRequest(req, res, next) {
 
 function validatePlayerRequest(req, res, next) {
     try {
-        req.body.guildName = req.body.guildName.trim().replace(/\s+/, " ");
+        req.body.guildName = req.body.guildName
+            .trim()
+            .replace(/\s+/, " ")
+            .toLowerCase();
     } catch (err) {
         res.send(JSON.stringify({ err: "Invalid guild name." }));
     }

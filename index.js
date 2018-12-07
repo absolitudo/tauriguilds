@@ -67,7 +67,7 @@ MongoClient.connect(
             const realm = req.body.realm;
             try {
                 const guild = await guildsCollection.findOne({
-                    guildName: new RegExp(guildName, "i"),
+                    guildName: new RegExp("^" + guildName + "$", "i"),
                     realm
                 });
 
@@ -89,7 +89,7 @@ MongoClient.connect(
             let updateId = 0;
             try {
                 let oldGuildData = await guildsCollection.findOne({
-                    guildName: new RegExp(guildName, "i"),
+                    guildName: new RegExp("^" + guildName + "$", "i"),
                     realm
                 });
 
@@ -110,7 +110,10 @@ MongoClient.connect(
                         );
                         await guildsCollection.updateOne(
                             {
-                                guildName: new RegExp(guildName, "i")
+                                guildName: new RegExp(
+                                    "^" + guildName + "$",
+                                    "i"
+                                )
                             },
                             { $set: data }
                         );
@@ -138,7 +141,7 @@ MongoClient.connect(
             const updateId = 0;
             try {
                 const guild = await guildsCollection.findOne({
-                    guildName: new RegExp(guildName, "i"),
+                    guildName: new RegExp("^" + guildName + "$", "i"),
                     realm
                 });
 
@@ -164,7 +167,7 @@ MongoClient.connect(
 
                 guildsCollection.updateOne(
                     {
-                        guildName: new RegExp(guildName, "i"),
+                        guildName: new RegExp("^" + guildName + "$", "i"),
                         realm
                     },
                     {
@@ -221,7 +224,10 @@ MongoClient.connect(
 
                     guildsCollection.updateOne(
                         {
-                            guildName: new RegExp(guilds[i].guildname, "i"),
+                            guildName: new RegExp(
+                                "^" + guilds[i].guildname + "$",
+                                "i"
+                            ),
                             realm: guilds[i].realm
                         },
                         { $set: newGuildData }
@@ -232,7 +238,10 @@ MongoClient.connect(
                     console.log(err);
                     if (err === "guild not found") {
                         guildsCollection.deleteOne({
-                            guildName: new RegExp(guilds[i].guildname, "i"),
+                            guildName: new RegExp(
+                                "^" + guilds[i].guildname + "$",
+                                "i"
+                            ),
                             realm: guilds[i].realm
                         });
                         i++;
