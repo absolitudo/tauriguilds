@@ -273,6 +273,11 @@ function whenWas(time) {
     return false;
 }
 
+function capitalizeString(string) {
+    let newString = string[0].toUpperCase() + string.slice(1, string.length);
+    return newString;
+}
+
 module.exports = {
     getGuildData,
     getGuildListProgression,
@@ -283,5 +288,6 @@ module.exports = {
     mergeOldGuildData,
     wait,
     whenWas,
-    areObjectsIdentical
+    areObjectsIdentical,
+    capitalizeString
 };

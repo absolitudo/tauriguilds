@@ -10,7 +10,8 @@ const {
     mergeOldGuildData,
     areObjectsIdentical,
     whenWas,
-    wait
+    wait,
+    capitalizeString
 } = require("./helpers.js");
 const updater = require("./updater");
 const dbUser = process.env.MONGODB_USER;
@@ -99,8 +100,8 @@ MongoClient.connect(
                     res.send(oldGuildData);
                 } else {
                     if (updater.isUpdating(guildName))
-                        throw guildName +
-                            " is currently updating, guild updates can take minutes depending on the amount of guild members.";
+                        throw capitalizeString(guildName) +
+                            " is currently updating, this may take several minutes.";
 
                     updateId = updater.update(guildName);
                     let newGuildData = await getGuildData(realm, guildName);
