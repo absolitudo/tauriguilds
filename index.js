@@ -6,7 +6,9 @@ const MongoClient = require("mongodb").MongoClient;
 const {
     getGuildData,
     getPlayerProgression,
+    getGuildProgression,
     mergeOldGuildData,
+    areObjectsIdentical,
     whenWas,
     wait
 } = require("./helpers.js");
@@ -162,8 +164,23 @@ MongoClient.connect(
 
                 updateId = updater.update(playerId);
 
-                let data = await getPlayerProgression(realm, player.name);
-                let newPlayer = { ...player, ...data };
+                let newPlayerProgression = await getPlayerProgression(
+                    realm,
+                    player.name
+                );
+                let newPlayer = { ...player, ...newPlayerProgression };
+
+                let guildProgression = guild.progression;
+
+                if (
+                    !areObjectsIdentical(
+                        player.progression,
+                        newPlayer.progression
+                    )
+                ) {
+                    guild.guildList[playerId] = newPlayer;
+                    guildProgression = getGuildProgression(guild.guildList);
+                }
 
                 guildsCollection.updateOne(
                     {
@@ -172,7 +189,8 @@ MongoClient.connect(
                     },
                     {
                         $set: {
-                            [`guildList.${playerId}`]: newPlayer
+                            [`guildList.${playerId}`]: newPlayer,
+                            progression: guildProgression
                         }
                     }
                 );
