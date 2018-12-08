@@ -231,6 +231,28 @@ function mergeOldGuildData(oldGuildData, newGuildData) {
     return { ...newGuildData, progression };
 }
 
+function areObjectsIdentical(obj1, obj2) {
+    if (typeof obj1 !== "object" || typeof obj2 !== "object") return false;
+
+    if (
+        Object.getOwnPropertyNames(obj1).length !==
+        Object.getOwnPropertyNames(obj2).length
+    )
+        return false;
+
+    for (let key in obj1) {
+        if (typeof obj1[key] === "object") {
+            if (!areObjectsIdentical(obj1[key], obj2[key])) {
+                return false;
+            }
+        } else if (obj1[key] !== obj2[key]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 function wait(time) {
     if (typeof time !== "number") {
         throw "invalid input";
@@ -260,5 +282,6 @@ module.exports = {
     abbreviateProgression,
     mergeOldGuildData,
     wait,
-    whenWas
+    whenWas,
+    areObjectsIdentical
 };
