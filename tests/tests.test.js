@@ -4,7 +4,8 @@ const {
     mergeOldGuildData,
     abbreviateProgression,
     getProgFromAchi,
-    getGuildProgression
+    getGuildProgression,
+    areObjectsIdentical
 } = require("../helpers");
 
 const raids = require("../raids.json");
@@ -248,5 +249,118 @@ describe("get guild progression", () => {
         expect(progression["Throne of Thunder"].abbreviation).toBe(
             "TOT 13/13 HC"
         );
+    });
+});
+
+describe("areObjectsIdentical", () => {
+    describe("is false", () => {
+        test("1", () => {
+            expect(areObjectsIdentical()).toBe(false);
+        });
+        test("2", () => {
+            expect(areObjectsIdentical(undefined)).toBe(false);
+        });
+        test("3", () => {
+            expect(areObjectsIdentical(false)).toBe(false);
+        });
+        test("4", () => {
+            expect(areObjectsIdentical(true)).toBe(false);
+        });
+        test("5", () => {
+            expect(areObjectsIdentical(true, false)).toBe(false);
+        });
+        test("6", () => {
+            expect(areObjectsIdentical(false, true)).toBe(false);
+        });
+        test("7", () => {
+            expect(areObjectsIdentical(0, 1)).toBe(false);
+        });
+        test("8", () => {
+            expect(areObjectsIdentical("string", 1)).toBe(false);
+        });
+        test("9", () => {
+            expect(areObjectsIdentical(1, "string")).toBe(false);
+        });
+        test("10", () => {
+            expect(areObjectsIdentical(1, 1)).toBe(false);
+        });
+        test("11", () => {
+            expect(areObjectsIdentical("string", "string")).toBe(false);
+        });
+        test("12", () => {
+            expect(areObjectsIdentical({ 1: "hi" }, { 2: "bhi" })).toBe(false);
+        });
+        test("13", () => {
+            expect(areObjectsIdentical({ 2: "hi" }, { 2: "bhi" })).toBe(false);
+        });
+        test("14", () => {
+            expect(
+                areObjectsIdentical({ 1: "asd", 2: "bsd" }, ["asd", "bsd"])
+            ).toBe(false);
+        });
+        test("15", () => {
+            expect(
+                areObjectsIdentical({ 1: "asd", 2: "bsd" }, { 1: "asd" })
+            ).toBe(false);
+        });
+        test("16", () => {
+            expect(
+                areObjectsIdentical(
+                    { 1: "asd", 2: "bsd" },
+                    { 1: "asd", 2: "bsd", 3: "asd" }
+                )
+            ).toBe(false);
+        });
+    });
+
+    describe("is true", () => {
+        test("1", () => {
+            expect(
+                areObjectsIdentical(
+                    { 1: "asd", 2: "bsd" },
+                    { 1: "asd", 2: "bsd" }
+                )
+            ).toBe(true);
+        });
+        test("2", () => {
+            expect(
+                areObjectsIdentical(
+                    { 1: { 1: "asd", 2: "bsd" }, 2: "bsd" },
+                    { 1: { 1: "asd", 2: "bsd" }, 2: "bsd" }
+                )
+            ).toBe(true);
+        });
+        test("3", () => {
+            expect(
+                areObjectsIdentical(
+                    { 1: "asd", 2: { 1: "hi", 2: "hu" } },
+                    { 1: "asd", 2: { 1: "hi", 2: "hu" } }
+                )
+            ).toBe(true);
+        });
+        test("4", () => {
+            expect(
+                areObjectsIdentical(
+                    { 1: "asd", 2: { 1: "hi", 2: {} } },
+                    { 1: "asd", 2: { 1: "hi", 2: {} } }
+                )
+            ).toBe(true);
+        });
+        test("5", () => {
+            expect(
+                areObjectsIdentical(
+                    { 1: "asd", 2: { 1: "hi", 2: { 3: "hi" } } },
+                    { 1: "asd", 2: { 1: "hi", 2: { 3: "hi" } } }
+                )
+            ).toBe(true);
+        });
+        test("6", () => {
+            expect(
+                areObjectsIdentical(
+                    { 1: { 2: "hi" }, 2: { 4: [] } },
+                    { 1: { 2: "hi" }, 2: { 4: [] } }
+                )
+            ).toBe(true);
+        });
     });
 });
